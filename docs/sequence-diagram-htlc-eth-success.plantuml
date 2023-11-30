@@ -1,0 +1,67 @@
+@startuml
+skinparam BoxPadding 20
+
+legend top
+HashedTimelock contract: normal flow - receiver withdraws with preimage before the timelock expires
+end legend
+
+box “LC Network                                                        ETH network" #A9C5E6
+participant Peter@LC as senderLC << Account >>
+participant Han@LC as receiverLC << Account >>
+participant HashedTimelockLC as htlcLC << Smart Contract >>
+participant EventsLC as eventsLC
+
+participant . as .
+
+participant Han@ETH as senderETH << Account >>
+participant Peter@ETH as receiverETH << Account >>
+participant HashedTimelockETH as htlcETH << Smart Contract >>
+participant EventsETH as eventsETH
+end box
+
+note left of htlcLC
+State stored for each HTLC:
+  address sender;
+  address receiver;
+  uint amount;
+  bytes32 hashlock;
+  uint timelock; // UNIX ts
+  bool withdrawn;
+  bool refunded;
+  bytes32 preimage;
+end note
+
+activate htlcLC
+senderLC->htlcLC:newContract(receiver, hashlock, timelock) => ETH amount
+htlcLC->eventsLC:LogHTLCNew(lcContractId, locks, values, etc.)
+htlcLC->senderLC:lcContractId
+deactivate htlcLC
+
+senderLC->receiverLC:reveals lcContractId after 1 LC is locked
+receiverLC->senderETH:validate contract@LC and start a new contract@ETH
+
+activate htlcETH
+senderETH->htlcETH:newContract(receiver, hashlock, timelock) => ETH amount
+htlcETH->eventsETH:LogHTLCNew(ethContractId, locks, values, etc.)
+htlcETH->senderETH:ethContractId
+deactivate htlcETH
+
+senderETH->receiverETH:reveals ethContractId after 2 ETH is locked
+receiverETH->senderLC:validate contract@ETH
+senderLC->receiverETH:start settlement process
+
+activate htlcETH
+receiverETH->htlcETH:withdraw(ethContractId, secret)
+htlcETH->eventsETH:LogHTLCWithdraw(ethContractId)
+htlcETH->receiverETH:2 ETH added <=
+deactivate htlcETH
+
+receiverETH->receiverLC:reveal secret
+
+activate htlcLC
+receiverLC->htlcLC:withdraw(lcContractId, secret)
+htlcLC->eventsLC:LogHTLCWithdraw(lcContractId)
+htlcLC->receiverLC:1 LC added <=
+deactivate htlcLC
+
+@enduml

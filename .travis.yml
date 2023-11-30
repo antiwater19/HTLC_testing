@@ -1,0 +1,13 @@
+dist: xenial
+language: node_js
+node_js:
+  - node
+  - lts/*
+cache:
+  directories:
+    - node_modules
+script:
+script:
+  - npm run ganache-start > /dev/null &
+  - sleep 5
+  - npm test
