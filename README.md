@@ -33,6 +33,7 @@ web3
 ganache를 실행할때는 자신이 truffle에 설정해놓은 네트워크아이디나.
 port를 확인하고 실행시키고 truffle을 작동시켜야 한다.
 ganache 실행과 동시에 네트워크ID설정과 포트 설정은 아래와 같이 한다.
+    
     ganache-cli --networkId 4447 --port=7542 
     ganache-cli --networkId (네트워크아이디) --port=(포트번호)
 
